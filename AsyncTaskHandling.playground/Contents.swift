@@ -121,6 +121,10 @@ func startExecuting() {
             print("received response for \(name): \(response)")
         }
     }
+    
+    DispatchQueue.global(qos: .default).asyncAfter(deadline: .now() + 8) {
+        ServiceQueue.shared.removeAll()
+    }
 }
 
 startExecuting()

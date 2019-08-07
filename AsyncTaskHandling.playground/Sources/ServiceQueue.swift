@@ -57,6 +57,12 @@ public class ServiceQueue {
         return request
     }
     
+    public func removeAll() {
+        self._queue.sync {
+            self.requests.removeAll()
+        }
+    }
+    
     public func firstRequest() -> _RequestQueue? {
         var request: _RequestQueue?
         
