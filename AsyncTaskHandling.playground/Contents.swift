@@ -3,6 +3,7 @@ import Foundation
 
 PlaygroundPage.current.needsIndefiniteExecution = true
 
+/*
 let handler = TaskHandler()
 
 handler.request(for: "ankit") { message, data in
@@ -30,6 +31,8 @@ handler.request(for: "kailash") { message, data in
     print("------------------------------------\n")
     PlaygroundPage.current.finishExecution()
 }
+
+ */
 
 /*
 var names = [String]() {
@@ -61,3 +64,63 @@ queue3.async {
     semaphore.signal()
 }
 */
+
+func startExecuting() {
+    DispatchQueue.global(qos: .default).async {
+        let name = "ankit bharti"
+        ServiceQueue.shared.write(value: name) { response in
+            print("received response for \(name): \(response)")
+        }
+    }
+    
+    DispatchQueue.global(qos: .default).async {
+        let name = "rohit shrivastva"
+        ServiceQueue.shared.write(value: name) { response in
+            print("received response for \(name): \(response)")
+        }
+    }
+    
+    DispatchQueue.global(qos: .default).async {
+        let name = "kailash kumar"
+        ServiceQueue.shared.write(value: name) { response in
+            print("received response for \(name): \(response)")
+        }
+    }
+    
+    DispatchQueue.global(qos: .default).async {
+        let name = "garima sharma"
+        ServiceQueue.shared.write(value: name) { response in
+            print("received response for \(name): \(response)")
+        }
+    }
+    
+    DispatchQueue.global(qos: .default).async {
+        let name = "sumit sharma"
+        ServiceQueue.shared.write(value: name) { response in
+            print("received response for \(name): \(response)")
+        }
+    }
+    
+    DispatchQueue.global(qos: .default).async {
+        let name = "shashi mishra"
+        ServiceQueue.shared.write(value: name) { response in
+            print("received response for \(name): \(response)")
+        }
+    }
+    
+    DispatchQueue.global(qos: .default).async {
+        let name = "nitish diwakar"
+        ServiceQueue.shared.write(value: name) { response in
+            print("received response for \(name): \(response)")
+        }
+    }
+    
+    DispatchQueue.global(qos: .default).async {
+        let name = "aakriti kishore"
+        ServiceQueue.shared.write(value: name) { response in
+            print("received response for \(name): \(response)")
+        }
+    }
+}
+
+startExecuting()
