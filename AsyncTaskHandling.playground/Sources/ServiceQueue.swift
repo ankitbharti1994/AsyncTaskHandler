@@ -14,9 +14,10 @@ public typealias _ExecutionResponseType = (String, _ResponseType) -> Void
 
 public class ServiceQueue {
     private let semaphore: DispatchSemaphore
+    private let processQueue: DispatchQueue
     private var requests: [_RequestQueue] = [] {
         didSet {
-            DispatchQueue.global().async {
+            self.processQueue.async {
                 self.semaphore.wait()
                 self.startProcessing()
             }
@@ -27,6 +28,7 @@ public class ServiceQueue {
     
     private init() {
         self._queue = DispatchQueue(label: "com.service.ankit", attributes: .concurrent)
+        self.processQueue = DispatchQueue(label: "process.service.ankit")
         self.semaphore = DispatchSemaphore(value: 1)
     }
     
