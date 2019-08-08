@@ -14,7 +14,9 @@ public typealias _ExecutionResponseType = (String, _ResponseType) -> Void
 
 public class ServiceQueue {
     private let semaphore: DispatchSemaphore
+    private let _queue: DispatchQueue
     private let processQueue: DispatchQueue
+    
     private var requests: [_RequestQueue] = [] {
         didSet {
             self.processQueue.async {
@@ -24,10 +26,8 @@ public class ServiceQueue {
         }
     }
     
-    private let _queue: DispatchQueue
-    
     private init() {
-        self._queue = DispatchQueue(label: "com.service.ankit", attributes: .concurrent)
+        self._queue = DispatchQueue(label: "com.service.ankit")
         self.processQueue = DispatchQueue(label: "process.service.ankit")
         self.semaphore = DispatchSemaphore(value: 1)
     }
@@ -90,6 +90,7 @@ public class ServiceQueue {
                 print("request in queue.")
             } else {
                 print("executed all reques.")
+                self.semaphore.signal()
             }
             
             return
@@ -104,7 +105,7 @@ public class ServiceQueue {
     }
     
     private func execute(_ request: _RequestQueue, _ completion: @escaping _ExecutionResponseType) {
-        DispatchQueue.global(qos: .default).asyncAfter(deadline: .now() + 5) {
+        DispatchQueue.global(qos: .default).asyncAfter(deadline: .now() + 1.0) {
             completion(request.0, request.1)
         }
     }
