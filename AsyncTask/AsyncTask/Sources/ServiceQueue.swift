@@ -14,13 +14,13 @@ typealias _ExecutionResponseType = (String, _ResponseType) -> Void
 
 class ServiceQueue {
     private let semaphore: DispatchSemaphore
-    private let _queue: DispatchQueue
+    private let resourceQueue: DispatchQueue
     private let processingQueue: DispatchQueue
     
     private var requests: [_RequestQueue] = []
     
     private init() {
-        self._queue = DispatchQueue(label: "com.service.ankit")
+        self.resourceQueue = DispatchQueue(label: "com.service.ankit")
         self.processingQueue = DispatchQueue(label: "com.service.processing")
         self.semaphore = DispatchSemaphore(value: 1)
     }
@@ -28,7 +28,7 @@ class ServiceQueue {
     static let shared = ServiceQueue()
     
     func enqueue(_ request: _RequestQueue) {
-        self._queue.async(flags: .barrier) {
+        self.resourceQueue.async(flags: .barrier) {
             self.requests.append(request)
             print("inserted \(request.0) to queue.")
             self.processingQueue.async {
@@ -41,7 +41,7 @@ class ServiceQueue {
     func dequeue() -> _RequestQueue? {
         var request: _RequestQueue?
         
-        self._queue.sync {
+        self.resourceQueue.sync {
             if self.requests.isEmpty {
                 request = nil
             } else {
@@ -55,7 +55,7 @@ class ServiceQueue {
     func firstRequest() -> _RequestQueue? {
         var request: _RequestQueue?
         
-        self._queue.sync {
+        self.resourceQueue.sync {
             if self.requests.isEmpty {
                 request = nil
             } else {
@@ -68,7 +68,7 @@ class ServiceQueue {
     
     var count: Int {
         var queueCount = 0
-        _queue.sync {
+        resourceQueue.sync {
             queueCount = self.requests.count
         }
         
@@ -77,13 +77,7 @@ class ServiceQueue {
     
     private func startProcessing() {
         guard let request = self.firstRequest() else {
-            if self.count > 0 {
-                print("request in queue.")
-            } else {
-                print("executed all reques.")
-                self.semaphore.signal()
-            }
-            
+            print("nothing to execute.")
             return
         }
         
