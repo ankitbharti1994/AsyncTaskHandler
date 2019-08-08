@@ -8,14 +8,16 @@
 
 import Foundation
 
-public typealias _ResponseType = (String) -> Void
-public typealias _RequestQueue = (String, _ResponseType)
-public typealias _ExecutionResponseType = (String, _ResponseType) -> Void
+typealias _ResponseType = (String) -> Void
+typealias _RequestQueue = (String, _ResponseType)
+typealias _ExecutionResponseType = (String, _ResponseType) -> Void
 
-public class ServiceQueue {
+class ServiceQueue {
+    private let semaphore: DispatchSemaphore
     private var requests: [_RequestQueue] = [] {
         didSet {
-            DispatchQueue.global(qos: .default).async {
+            DispatchQueue.global().async {
+                self.semaphore.wait()
                 self.startProcessing()
             }
         }
@@ -32,18 +34,19 @@ public class ServiceQueue {
     
     private init() {
         self._queue = DispatchQueue(label: "com.service.ankit", attributes: .concurrent)
+        self.semaphore = DispatchSemaphore(value: 1)
     }
     
-    public static let shared = ServiceQueue()
+    static let shared = ServiceQueue()
     
-    public func enqueue(_ request: _RequestQueue) {
+    func enqueue(_ request: _RequestQueue) {
         self._queue.async(flags: .barrier) {
             self.requests.append(request)
             print("inserted \(request.0) to queue.")
         }
     }
     
-    public func dequeue() -> _RequestQueue? {
+    func dequeue() -> _RequestQueue? {
         var request: _RequestQueue?
         
         self._queue.sync {
@@ -57,13 +60,7 @@ public class ServiceQueue {
         return request
     }
     
-    public func removeAll() {
-        self._queue.sync {
-            self.requests.removeAll()
-        }
-    }
-    
-    public func firstRequest() -> _RequestQueue? {
+    func firstRequest() -> _RequestQueue? {
         var request: _RequestQueue?
         
         self._queue.sync {
@@ -77,7 +74,7 @@ public class ServiceQueue {
         return request
     }
     
-    private var count: Int {
+    var count: Int {
         var queueCount = 0
         _queue.sync {
             queueCount = self.requests.count
@@ -87,19 +84,19 @@ public class ServiceQueue {
     }
     
     private func startProcessing() {
-        guard let request = self.firstRequest(), self.executionState == .normal else {
+        guard let request = self.firstRequest() else {
             if self.count > 0 {
                 print("request in queue.")
             } else {
                 print("executed all reques.")
             }
+            
             return
         }
         
-        self.executionState = .busy
         execute(request) { [weak self] value, handler in
-            self?.executionState = .normal
             _ = self?.dequeue()
+            self?.semaphore.signal()
             print("deleted \(value) from queue.")
             handler(value)
         }
@@ -111,7 +108,7 @@ public class ServiceQueue {
         }
     }
     
-    public func write(value: String, _ handler: @escaping _ResponseType) {
+    func write(value: String, _ handler: @escaping _ResponseType) {
         self.enqueue((value, handler))
     }
 }
