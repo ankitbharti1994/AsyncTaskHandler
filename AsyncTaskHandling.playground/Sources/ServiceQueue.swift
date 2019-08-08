@@ -8,11 +8,11 @@
 
 import Foundation
 
-typealias _ResponseType = (String) -> Void
-typealias _RequestQueue = (String, _ResponseType)
-typealias _ExecutionResponseType = (String, _ResponseType) -> Void
+public typealias _ResponseType = (String) -> Void
+public typealias _RequestQueue = (String, _ResponseType)
+public typealias _ExecutionResponseType = (String, _ResponseType) -> Void
 
-class ServiceQueue {
+public class ServiceQueue {
     private let semaphore: DispatchSemaphore
     private var requests: [_RequestQueue] = [] {
         didSet {
@@ -25,21 +25,14 @@ class ServiceQueue {
     
     private let _queue: DispatchQueue
     
-    enum ExecutionState {
-        case busy
-        case normal
-    }
-    
-    private var executionState: ExecutionState = .normal
-    
     private init() {
         self._queue = DispatchQueue(label: "com.service.ankit", attributes: .concurrent)
         self.semaphore = DispatchSemaphore(value: 1)
     }
     
-    static let shared = ServiceQueue()
+    public static let shared = ServiceQueue()
     
-    func enqueue(_ request: _RequestQueue) {
+    public func enqueue(_ request: _RequestQueue) {
         self._queue.async(flags: .barrier) {
             self.requests.append(request)
             print("inserted \(request.0) to queue.")
@@ -83,6 +76,12 @@ class ServiceQueue {
         return queueCount
     }
     
+    public func removeAll() {
+        _queue.sync {
+            self.requests.removeAll()
+        }
+    }
+    
     private func startProcessing() {
         guard let request = self.firstRequest() else {
             if self.count > 0 {
@@ -108,7 +107,7 @@ class ServiceQueue {
         }
     }
     
-    func write(value: String, _ handler: @escaping _ResponseType) {
+    public func write(value: String, _ handler: @escaping _ResponseType) {
         self.enqueue((value, handler))
     }
 }
