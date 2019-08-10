@@ -38,7 +38,7 @@ class ServiceQueue {
         }
     }
     
-    func dequeue() -> _RequestQueue? {
+    private func dequeue() -> _RequestQueue? {
         var request: _RequestQueue?
         
         self.resourceQueue.sync {
@@ -52,41 +52,15 @@ class ServiceQueue {
         return request
     }
     
-    func firstRequest() -> _RequestQueue? {
-        var request: _RequestQueue?
-        
-        self.resourceQueue.sync {
-            if self.requests.isEmpty {
-                request = nil
-            } else {
-                request = self.requests.first
-            }
-        }
-        
-        return request
-    }
-    
-    var count: Int {
-        var queueCount = 0
-        resourceQueue.sync {
-            queueCount = self.requests.count
-        }
-        
-        return queueCount
-    }
-    
     private func startProcessing() {
-        guard let request = self.firstRequest() else {
+        guard let request = self.dequeue() else {
             print("nothing to execute.")
+            self.semaphore.signal()
             return
         }
         
-        print("started executing at: \(Date())")
         execute(request) { [weak self] value, handler in
-            print("Finished execution at: \(Date())")
-            _ = self?.dequeue()
             self?.semaphore.signal()
-            print("deleted \(value) from queue.")
             handler(value)
         }
     }
